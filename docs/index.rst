@@ -209,6 +209,9 @@ uploading assets to S3.
                             specified by `flask.url_for`.
 `S3_HEADERS`                Sets custom headers to be sent with each file to S3.
                             **Default:** `{}`
+`S3_RETRY_COUNT`            How many times Flask-S3 will retry an upload to S3
+                            if it encounters a network error.
+                            **Default:** 1
 `S3_CACHE_CONTROL`          **Deprecated**. Please use `S3_HEADERS` instead.
 `S3_USE_CACHE_CONTROL`      **Deprecated**. Please use `S3_HEADERS` instead.
 =========================== ===================================================

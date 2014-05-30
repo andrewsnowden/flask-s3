@@ -1,5 +1,6 @@
 import os
 import logging
+import socket
 from collections import defaultdict
 
 from flask import url_for as flask_url_for
@@ -105,12 +106,21 @@ def _write_files(app, static_url_loc, static_folder, files, bucket,
         if ex_keys and key_name in ex_keys:
             logger.debug("%s excluded from upload" % key_name)
         else:
-            k = Key(bucket=bucket, name=key_name)
-            # Set custom headers
-            for header, value in app.config['S3_HEADERS'].iteritems():
-                k.set_metadata(header, value)
-            k.set_contents_from_filename(file_path)
-            k.make_public()
+            retries = current_app.config.get('S3_RETRY_COUNT', 1)
+            for retry in range(retries):
+                try:
+                    k = Key(bucket=bucket, name=key_name)
+                    # Set custom headers
+                    for header, value in app.config['S3_HEADERS'].iteritems():
+                        k.set_metadata(header, value)
+                    k.set_contents_from_filename(file_path)
+                    k.make_public()
+                except socket.error as e:
+                    if retry < retries - 1:
+                        logger.warn("Socket error uploading, retrying: %s" % (e))
+                    else:
+                        raise e
+
 
 
 def _upload_files(app, files_, bucket):
