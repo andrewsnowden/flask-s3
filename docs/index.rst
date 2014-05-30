@@ -212,6 +212,9 @@ uploading assets to S3.
 `S3_RETRY_COUNT`            How many times Flask-S3 will retry an upload to S3
                             if it encounters a network error.
                             **Default:** 1
+`S3_RETRY_SLEEP`            How long we should wait in between retries (in
+                            seconds)
+                            **DEFAULT:** 1
 `S3_CACHE_CONTROL`          **Deprecated**. Please use `S3_HEADERS` instead.
 `S3_USE_CACHE_CONTROL`      **Deprecated**. Please use `S3_HEADERS` instead.
 =========================== ===================================================

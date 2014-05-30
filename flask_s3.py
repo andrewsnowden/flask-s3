@@ -1,6 +1,7 @@
 import os
 import logging
 import socket
+import time
 from collections import defaultdict
 
 from flask import url_for as flask_url_for
@@ -118,6 +119,7 @@ def _write_files(app, static_url_loc, static_folder, files, bucket,
                 except socket.error as e:
                     if retry < retries - 1:
                         logger.warn("Socket error uploading, retrying: %s" % (e))
+                        time.sleep(app.config.get('S3_RETRY_SLEEP', 1))
                     else:
                         raise e
 
