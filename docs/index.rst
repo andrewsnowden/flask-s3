@@ -215,6 +215,10 @@ uploading assets to S3.
 `S3_RETRY_SLEEP`            How long we should wait in between retries (in
                             seconds)
                             **DEFAULT:** 1
+`S3_ONLY_MODIFIED`          Only upload files that have been modified since last
+                            upload to S3. SHA-1 file hashes are used to compute
+                            file changes. You can delete `.file-hashes` from 
+                            your S3 bucket to force all files to upload again.
 `S3_CACHE_CONTROL`          **Deprecated**. Please use `S3_HEADERS` instead.
 `S3_USE_CACHE_CONTROL`      **Deprecated**. Please use `S3_HEADERS` instead.
 =========================== ===================================================
