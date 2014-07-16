@@ -9,6 +9,7 @@ from collections import defaultdict
 from flask import url_for as flask_url_for
 from flask import current_app
 from boto.s3.connection import S3Connection
+from boto.s3 import connect_to_region
 from boto.exception import S3CreateError, S3ResponseError
 from boto.s3.key import Key
 
@@ -103,7 +104,7 @@ def _static_folder_path(static_url, static_folder, static_asset):
     # static_asset is not simply a filename because it could be
     # sub-directory then file etc.
     if not static_asset.startswith(static_folder):
-        raise ValueError("%s startic asset must be under %s static folder" %
+        raise ValueError("%s static asset must be under %s static folder" %
                          (static_asset, static_folder))
     rel_asset = static_asset[len(static_folder):]
     # Now bolt the static url path and the relative asset location together
@@ -148,7 +149,6 @@ def _write_files(app, static_url_loc, static_folder, files, bucket,
                         time.sleep(app.config.get('S3_RETRY_SLEEP', 1))
                     else:
                         raise e
-
 
     return new_hashes
 
@@ -224,7 +224,12 @@ def create_all(app, user=None, password=None, bucket_name=None,
     # build list of static files
     all_files = _gather_files(app, include_hidden)
     logger.debug("All valid files: %s" % all_files)
-    conn = S3Connection(user, password) # connect to s3
+    if location in ("DEFAULT", ""):
+        conn = S3Connection(user, password) # connect to s3
+    else:
+        region = "eu-west-1" if location == "EU" else location
+        conn = connect_to_region(region, aws_access_key_id=user,
+                aws_secret_access_key=password)
     # get_or_create bucket
     try:
         try:
