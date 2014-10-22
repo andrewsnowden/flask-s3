@@ -15,6 +15,7 @@ from boto.s3.key import Key
 
 logger = logging.getLogger('flask_s3')
 
+
 def hash_file(filename):
     """
     Generate a hash for the contents of a file
@@ -75,7 +76,7 @@ def _gather_files(app, hidden):
         dirs.extend([bp_details(x) for x in blueprints if x.static_folder])
 
     valid_files = defaultdict(list)
-    for static_folder, static_url_loc  in dirs:
+    for static_folder, static_url_loc in dirs:
         if not os.path.isdir(static_folder):
             logger.warning("WARNING - [%s does not exist]" % static_folder)
         else:
@@ -157,12 +158,12 @@ def _upload_files(app, files_, bucket, hashes=None):
     new_hashes = []
     for (static_folder, static_url), names in files_.iteritems():
         new_hashes.extend(_write_files(app, static_url, static_folder, names,
-            bucket, hashes=hashes))
+                                       bucket, hashes=hashes))
     return new_hashes
 
 
 def create_all(app, user=None, password=None, bucket_name=None,
-               location='', include_hidden=False):
+               location=None, include_hidden=False):
     """
     Uploads of the static assets associated with a Flask application to
     Amazon S3.
@@ -213,27 +214,29 @@ def create_all(app, user=None, password=None, bucket_name=None,
     /latest/dev/BucketRestrictions.html
 
     """
-    if user is None and 'AWS_ACCESS_KEY_ID' in app.config:
-        user = app.config['AWS_ACCESS_KEY_ID']
-    if password is None and 'AWS_SECRET_ACCESS_KEY' in app.config:
-        password = app.config['AWS_SECRET_ACCESS_KEY']
-    if bucket_name is None and 'S3_BUCKET_NAME' in app.config:
-        bucket_name = app.config['S3_BUCKET_NAME']
+    user = user or app.config.get('AWS_ACCESS_KEY_ID')
+    password = password or app.config.get('AWS_SECRET_ACCESS_KEY')
+    bucket_name = bucket_name or app.config.get('S3_BUCKET_NAME')
     if not bucket_name:
         raise ValueError("No bucket name provided.")
+    location = location or app.config.get('S3_REGION')
+
     # build list of static files
     all_files = _gather_files(app, include_hidden)
     logger.debug("All valid files: %s" % all_files)
-    if location in ("DEFAULT", ""):
-        conn = S3Connection(user, password) # connect to s3
+
+    # connect to s3
+    if not location:
+        conn = S3Connection(user, password)  # (default region)
     else:
-        region = "eu-west-1" if location == "EU" else location
-        conn = connect_to_region(region, aws_access_key_id=user,
-                aws_secret_access_key=password)
+        conn = connect_to_region(location,
+                                 aws_access_key_id=user,
+                                 aws_secret_access_key=password)
+
     # get_or_create bucket
     try:
         try:
-            bucket = conn.create_bucket(bucket_name, location=location)
+            bucket = conn.create_bucket(bucket_name)
         except S3CreateError as e:
             if e.error_code == u'BucketAlreadyOwnedByYou':
                 bucket = conn.get_bucket(bucket_name)
@@ -246,8 +249,9 @@ def create_all(app, user=None, password=None, bucket_name=None,
 
     if app.config['S3_ONLY_MODIFIED']:
         try:
-            hashes = json.loads(Key(bucket=bucket,
-                name=".file-hashes").get_contents_as_string())
+            hashes = json.loads(
+                Key(bucket=bucket,
+                    name=".file-hashes").get_contents_as_string())
         except S3ResponseError as e:
             logger.warn("No file hashes found: %s" % e)
             hashes = None
@@ -303,6 +307,6 @@ class FlaskS3(object):
 
         if app.config['USE_S3']:
             app.jinja_env.globals['url_for'] = url_for
-        if app.config['S3_USE_CACHE_CONTROL'] and 'S3_CACHE_CONTROL' in app.config:
+        if app.config['S3_USE_CACHE_CONTROL'] and app.config.get('S3_CACHE_CONTROL'):
             cache_control_header = app.config['S3_CACHE_CONTROL']
             app.config['S3_HEADERS']['Cache-Control'] = cache_control_header
