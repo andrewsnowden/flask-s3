@@ -259,7 +259,8 @@ def create_all(app, user=None, password=None, bucket_name=None,
     if not location:
         conn = S3Connection(user, password)  # (default region)
     else:
-        conn = connect_to_region(location,
+        region = "eu-west-1" if location == "EU" else location
+        conn = connect_to_region(region,
                                  aws_access_key_id=user,
                                  aws_secret_access_key=password)
 
