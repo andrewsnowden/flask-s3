@@ -239,6 +239,9 @@ uploading assets to S3.
                             still retaining the ability to change static files.
 `S3_CACHE_CONTROL`          **Deprecated**. Please use `S3_HEADERS` instead.
 `S3_USE_CACHE_CONTROL`      **Deprecated**. Please use `S3_HEADERS` instead.
+`S3_GZIP`                   Compress all assets using GZIP and set the
+                            corresponding Content-Type and Content-Encoding
+                            headers on the S3 files.
 =========================== ===================================================
 
 .. _debug: http://flask.pocoo.org/docs/config/#configuration-basics
