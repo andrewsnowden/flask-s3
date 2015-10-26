@@ -184,6 +184,11 @@ uploading assets to S3.
                             bucket name in the base url.
 `S3_BUCKET_NAME`            The desired name for your Amazon S3 bucket. Note:
                             the name will be visible in all your assets' URLs.
+`S3_URL_STYLE`              Set to `'host'` to use virtual-host-style URLs,
+                            e.g. ``bucketname.s3.amazonaws.com``. Set to
+                            `'path'` to use path-style URLs, e.g.
+                            ``s3.amazonaws.com/bucketname``.
+                            **Default:** `'host'`
 `S3_USE_HTTPS`              Specifies whether or not to serve your assets
                             stored in S3 over HTTPS.
                             **Default:** `True`
@@ -215,9 +220,18 @@ uploading assets to S3.
 `S3_RETRY_SLEEP`            How long we should wait in between retries (in
                             seconds)
                             **DEFAULT:** 1
+`S3_FILEPATH_HEADERS`       Sets custom headers for files whose filepath matches
+                            certain regular expressions. (Note that this cannot
+                            be used for CORS, that must be set per S3 bucket
+                            using an XML config string.) E.g. to add custom
+                            metadata when serving text files, set this to:
+                            `{r'\.txt$':`
+                            `    {'Texted-Up-By': 'Mister Foo'}`
+                            `}`
+                            **Default:** `{}`
 `S3_ONLY_MODIFIED`          Only upload files that have been modified since last
                             upload to S3. SHA-1 file hashes are used to compute
-                            file changes. You can delete `.file-hashes` from 
+                            file changes. You can delete `.file-hashes` from
                             your S3 bucket to force all files to upload again.
 `S3_CACHE_BUSTING`          Append a query string with a file hash to all static URLs
                             to force a fetch when file contents change. This is
