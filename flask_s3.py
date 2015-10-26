@@ -1,10 +1,7 @@
-<<<<<<< HEAD
 import os
 import logging
 import socket
 import time
-=======
->>>>>>> 0e374741d0d3fe18cefda532a6b248d72ef3458d
 import hashlib
 import json
 import logging
@@ -13,20 +10,11 @@ import re
 import zlib
 from collections import defaultdict
 
-<<<<<<< HEAD
-from flask import url_for as flask_url_for
-from flask import current_app, request
-from boto.s3.connection import S3Connection
-from boto.s3 import connect_to_region
-from boto.exception import S3CreateError, S3ResponseError
-from boto.s3.key import Key
-=======
 import boto3
 import boto3.exceptions
 from botocore.exceptions import ClientError
 from flask import current_app
 from flask import url_for as flask_url_for
->>>>>>> 0e374741d0d3fe18cefda532a6b248d72ef3458d
 
 logger = logging.getLogger('flask_s3')
 
@@ -244,24 +232,6 @@ def _write_files(s3, app, static_url_loc, static_folder, files, bucket,
         if ex_keys and full_key_name in ex_keys or exclude:
             logger.debug("%s excluded from upload" % key_name)
         else:
-<<<<<<< HEAD
-            retries = current_app.config.get('S3_RETRY_COUNT', 1)
-            for retry in range(retries):
-                try:
-                    k = Key(bucket=bucket, name=key_name)
-                    # Set custom headers
-                    for header, value in app.config['S3_HEADERS'].iteritems():
-                        k.set_metadata(header, value)
-                    k.set_contents_from_filename(file_path)
-                    k.make_public()
-                    break
-                except socket.error as e:
-                    if retry < retries - 1:
-                        logger.warn("Socket error uploading, retrying: %s" % (e))
-                        time.sleep(app.config.get('S3_RETRY_SLEEP', 1))
-                    else:
-                        raise e
-=======
             h = {}
             # Set more custom headers if the filepath matches certain
             # configured regular expressions.
@@ -278,17 +248,26 @@ def _write_files(s3, app, static_url_loc, static_folder, files, bucket,
             with open(file_path) as fp:
                 metadata, params = split_metadata_params(merge_two_dicts(app.config['S3_HEADERS'], h))
                 if should_gzip:
-                    data = zlib.compress(fp.read())
+                    data = zlib.compress(fp.read(), 9)
                 else:
                     data = fp.read()
 
-                s3.put_object(Bucket=bucket,
-                              Key=key_name,
-                              Body=data,
-                              ACL="public-read",
-                              Metadata=metadata,
-                              **params)
->>>>>>> 0e374741d0d3fe18cefda532a6b248d72ef3458d
+                retries = current_app.config.get('S3_RETRY_COUNT', 1)
+                for retry in range(retries):
+                    try:
+                        s3.put_object(Bucket=bucket,
+                                      Key=key_name,
+                                      Body=data,
+                                      ACL="public-read",
+                                      Metadata=metadata,
+                                      **params)
+                    except socket.error as e:
+                        if retry < retries - 1:
+                            logger.warn("Socket error uploading, retrying: %s"
+                                % (e))
+                            time.sleep(app.config.get('S3_RETRY_SLEEP', 1))
+                        else:
+                            raise e
 
     return new_hashes
 
@@ -374,25 +353,6 @@ def create_all(app, user=None, password=None, bucket_name=None,
     logger.debug("All valid files: %s" % all_files)
 
     # connect to s3
-<<<<<<< HEAD
-    if not location:
-        conn = S3Connection(user, password)  # (default region)
-    else:
-        region = "eu-west-1" if location == "EU" else location
-        conn = connect_to_region(region,
-                                 aws_access_key_id=user,
-                                 aws_secret_access_key=password)
-
-    # get_or_create bucket
-    try:
-        try:
-            bucket = conn.create_bucket(bucket_name, location=location)
-        except S3CreateError as e:
-            if e.error_code == u'BucketAlreadyOwnedByYou':
-                bucket = conn.get_bucket(bucket_name)
-            else:
-                raise e
-=======
     s3 = boto3.client("s3",
                       region_name=location or None,
                       aws_access_key_id=user,
@@ -407,7 +367,6 @@ def create_all(app, user=None, password=None, bucket_name=None,
             bucket = s3.create_bucket(Bucket=bucket_name)
         else:
             raise
->>>>>>> 0e374741d0d3fe18cefda532a6b248d72ef3458d
 
     s3.put_bucket_acl(Bucket=bucket_name, ACL='public-read')
 
@@ -463,15 +422,12 @@ class FlaskS3(object):
                     ('S3_CDN_DOMAIN', ''),
                     ('S3_USE_CACHE_CONTROL', False),
                     ('S3_HEADERS', {}),
-<<<<<<< HEAD
                     ('S3_ONLY_MODIFIED', False),
-                    ('S3_CACH_BUSTING', False)]
-=======
+                    ('S3_CACH_BUSTING', False),
                     ('S3_FILEPATH_HEADERS', {}),
                     ('S3_ONLY_MODIFIED', False),
                     ('S3_URL_STYLE', 'host'),
                     ('S3_GZIP', False)]
->>>>>>> 0e374741d0d3fe18cefda532a6b248d72ef3458d
 
         for k, v in defaults:
             app.config.setdefault(k, v)
