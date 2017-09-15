@@ -223,8 +223,6 @@ def _write_files(s3, app, static_url_loc, static_folder, files, bucket,
         full_key_name = _static_folder_path(static_url_loc, static_folder_rel,
                                             asset_loc)
         key_name = full_key_name.lstrip("/")
-        msg = "Uploading %s to %s as %s" % (file_path, bucket, key_name)
-        logger.debug(msg)
 
         exclude = False
         if app.config.get('S3_ONLY_MODIFIED', False):
@@ -235,8 +233,10 @@ def _write_files(s3, app, static_url_loc, static_folder, files, bucket,
                 exclude = True
 
         if ex_keys and full_key_name in ex_keys or exclude:
-            logger.debug("%s excluded from upload" % key_name)
+            logger.debug("Skipping: %s" % key_name)
         else:
+            logger.debug("Uploading %s to %s as %s" % (
+                file_path, bucket, key_name))
             h = {}
             # Set more custom headers if the filepath matches certain
             # configured regular expressions.
@@ -370,7 +370,6 @@ def create_all(app, user=None, password=None, bucket_name=None,
     # build list of static files
     all_files = _gather_files(app, include_hidden,
                               filepath_filter_regex=filepath_filter_regex)
-    logger.debug("All valid files: %s" % all_files)
 
     # connect to s3
     s3 = boto3.client("s3",
